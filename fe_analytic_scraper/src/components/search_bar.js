@@ -4,10 +4,28 @@
 import React, { Component } from 'react';
 import { MDBCol, MDBIcon } from "mdbreact";
 
+import { connect } from 'react-redux';
+import { update } from '../actions/search_bar';
+
+function mapStateToProps(state) {
+    return {
+        state: state.mySb
+    }
+}
+
+function mapDispatchToProps(dispatch) {
+    return {
+        update: (data) => dispatch(update(data))
+    }
+}
+
 class Searchbar extends Component {
     // TODO: make this redux state
-    changeHandler = event => {
-        alert('change!')
+    changeHandler = (event) => {
+        this.props.update(event)
+        // this seems a bit delayed, because update event is asynchronous and is slower
+        // than just to console log
+        console.log(this.props.state)
     }
 
     render() {
@@ -24,8 +42,9 @@ class Searchbar extends Component {
                     type="text"
                     placeholder="Search"
                     aria-label="Search"
-                    onChange={this.changeHandler}
+                    onChange={(event) => this.changeHandler(event.target.value)}
                 />
+                {/* cannot use just pass in the event to store, need to extract value */}
               </div>
             </MDBCol>
         );
@@ -33,4 +52,4 @@ class Searchbar extends Component {
 
 }
 
-export default Searchbar;
+export default connect(mapStateToProps, mapDispatchToProps)(Searchbar);
