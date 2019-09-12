@@ -25,6 +25,25 @@ class App extends Component {
         console.log(this.props.state)
     }
 
+    submitHandler = () => {
+        //TODO: start the download / notify that video is complete
+        fetch('http://localhost:8000/input/', {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'applicaiton/json',
+            },
+            body: JSON.stringify({
+                link: "this.props.state"
+            }),
+        })
+          .then((response) => { console.log("Received raw response") })
+          .then((resJson) => { alert('Response Getto! (Video Complete)'); })
+        console.log("submitted " + this.props.state)
+    }
+
     render() {
         return (
             <div className="App">
@@ -33,7 +52,7 @@ class App extends Component {
                     <h3>Please enter a channel to scrape data from</h3>
                 </div>
                 <div className="Searchbar">
-                    <Searchbar changeHandler={this.changeHandler}></Searchbar>
+                    <Searchbar changeHandler={this.changeHandler} submitHandler = {this.submitHandler}></Searchbar>
                 </div>
             </div>
         );
