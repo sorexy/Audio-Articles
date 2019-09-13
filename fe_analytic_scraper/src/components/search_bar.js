@@ -13,10 +13,12 @@ import { update } from '../actions/search_bar';
 class Searchbar extends Component {
     render() {
         return (
+            // TODO: make the search bar clear after submitting
+
             // Have to wrap in form because <input> does not support submit
             // event.preventDefault prevents the page from refreshing
             <form onSubmit={
-                    (event) => {this.props.submitHandler(); event.preventDefault();}
+                (event) => {this.props.submitHandler(); event.preventDefault();}
             }>
                 <MDBCol md="6">
                   <div className="input-group md-form form-sm form-1 pl-0">

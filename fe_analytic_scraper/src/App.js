@@ -26,7 +26,8 @@ class App extends Component {
     }
 
     submitHandler = () => {
-        //TODO: start the download / notify that video is complete
+        var title = prompt("What would you like to save the output as? (.mp3)", "Default")
+
         fetch('http://localhost:8000/input/', {
             method: 'POST',
             mode: 'cors',
@@ -36,25 +37,29 @@ class App extends Component {
                 'Content-Type': 'applicaiton/json',
             },
             body: JSON.stringify({
-                link: "this.props.state"
+                title: title,
+                link: this.props.state
             }),
         })
           .then((response) => { console.log("Received raw response") })
           .then((resJson) => { alert('Response Getto! (Video Complete)'); })
         console.log("submitted " + this.props.state)
+
+
     }
 
     render() {
         return (
             <div className="App">
                 <div className="Intro">
-                    <h1>Welcome to the YouTube Scraper</h1>
-                    <h3>Please enter a channel to scrape data from</h3>
+                    <h1>Welcome to the Article Parser</h1>
+                    <h3>Please enter an article URL</h3>
                 </div>
                 <div className="Searchbar">
                     <Searchbar changeHandler={this.changeHandler} submitHandler = {this.submitHandler}></Searchbar>
                 </div>
             </div>
+
         );
     }
 }
