@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
 
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup as bs4
 import html2text
+import json
+
 from google.cloud import texttospeech
 
 
@@ -16,7 +17,6 @@ def parse_html(link: str) -> str:
     req = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
     soup = bs4(urlopen(req), 'html.parser')
 
-    # remove elements with img tag
     imgs = soup.findAll('img')
     for img in imgs:
         img.decompose()
@@ -25,18 +25,20 @@ def parse_html(link: str) -> str:
         footer.decompose()
 
     paragraphs = soup.findAll('p')
-    parsedStr = parser.handle(str(paragraphs))
 
-    return parsedStr
+    parsedStr = parser.handle(str(paragraphs))
+    formattedStr = parsedStr
+    charsToRemove = ['\n,', '[', ']', '_', '*']
+    for c in charsToRemove:
+        formattedStr = formattedStr.replace(c, "")
+
+    return formattedStr
 
 
 def text2speech(name: str, input: str) -> None:
-    # docs: https://cloud.google.com/text-to-speech/docs/quickstart-client-libraries#client-libraries-install-python
-    # TODO: split 5000 characters files
     DOWNLOADS_FOLDER = "/Users/sorex/Projects/youtubeAnalyticScraper/be_analytic_scraper/src/be/html_parser/media/"
 
     client = texttospeech.TextToSpeechClient()
-    synthesis_input = texttospeech.types.SynthesisInput(text=input)
     # Build the voice request, select the language code ("en-US") and the ssml
     voice = texttospeech.types.VoiceSelectionParams(
         language_code='en-GB-Standard-C',
@@ -44,12 +46,34 @@ def text2speech(name: str, input: str) -> None:
     # Select the type of audio file you want returned
     audio_config = texttospeech.types.AudioConfig(
         audio_encoding=texttospeech.enums.AudioEncoding.MP3)
+
+    segments = []
+    tmp = input
+    cutoffChars, counter = ['\n', '.', ',', ' '], 0
+    cutoff = -1
+
+    while len(tmp) > 5000 or tmp:
+        while cutoff == -1 and counter < len(cutoffChars):
+            cutoff = tmp.rfind(cutoffChars[counter], 0, 5000)
+            counter += 1
+        else:
+            segments.append(tmp[:cutoff])
+            tmp = tmp[cutoff:]
+
+    synSegments = []
+    for segment in segments:
+        synSegments.append(texttospeech.types.SynthesisInput(text=segment))
+
     # Perform the text-to-speech request on the text input with the selected
     # voice parameters and audio file type
-    response = client.synthesize_speech(synthesis_input, voice, audio_config)
+    responses = []
+    for item in synSegments:
+        responses.append(client.synthesize_speech(
+            item, voice, audio_config))
 
     with open(DOWNLOADS_FOLDER + name + '.mp3', 'wb') as out:
-        out.write(response.audio_content)
+        for response in responses:
+            out.write(response.audio_content)
         print('Audio content written to media/' + name)
 
 
@@ -57,8 +81,7 @@ def text2speech(name: str, input: str) -> None:
 @csrf_exempt
 def input(request):
     if request.method == 'POST':
-        # TODO: Format the parsed article to extract only middle sentences and not ads, and commas in new paragraphs
-        # Figure out how to do video
+        # TODO: Figure out how to do video
         title = json.loads(request.body)['title']
         linkToParse = json.loads(request.body)['link']
         parsedArticle = parse_html(linkToParse)
