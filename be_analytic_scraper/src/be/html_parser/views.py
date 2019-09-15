@@ -35,44 +35,54 @@ def parse_html(link: str) -> str:
     return formattedStr
 
 
-def text2speech(name: str, input: str) -> None:
-    DOWNLOADS_FOLDER = "/Users/sorex/Projects/youtubeAnalyticScraper/be_analytic_scraper/src/be/html_parser/media/"
+def text_to_speech(name: str, input: str) -> None:
+    def split_article_and_convert(input: str) -> list:
+        """Google T2S has a limit of 5000 chars, if we have an article of more,
+        We have to split them into multiple requests and join them into a single
+        mp3
+        """
+        tmp = input[:]
+        cutoffChars = ['\n', '.', ',', ' ']
+        cutoff = -1
+        counter = 0
 
+        segments = []
+        while len(tmp) > 5000 or tmp:
+            while cutoff == -1 and counter < len(cutoffChars):
+                cutoff = tmp.rfind(cutoffChars[counter], 0, 5000)
+                counter += 1
+            else:
+                segments.append(tmp[:cutoff])
+                tmp = tmp[cutoff:]
+        print("Number of segments: %s" % (len(segments)))
+
+        synSegments = []
+        for segment in segments:
+            synSegments.append(texttospeech.types.SynthesisInput(text=segment))
+
+        responses = []
+        for item in synSegments:
+            responses.append(
+                client.synthesize_speech(item, voice, audio_config)
+            )
+
+        return responses
+
+    # Setup the client, voice, and format to be returned
+    DOWNLOADS_FOLDER = "/Users/sorex/Projects/youtubeAnalyticScraper/be_analytic_scraper/src/be/html_parser/media/"
     client = texttospeech.TextToSpeechClient()
-    # Build the voice request, select the language code ("en-US") and the ssml
+
     voice = texttospeech.types.VoiceSelectionParams(
         language_code='en-GB-Standard-C',
         ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
-    # Select the type of audio file you want returned
+
     audio_config = texttospeech.types.AudioConfig(
         audio_encoding=texttospeech.enums.AudioEncoding.MP3)
 
-    segments = []
-    tmp = input
-    cutoffChars, counter = ['\n', '.', ',', ' '], 0
-    cutoff = -1
-
-    while len(tmp) > 5000 or tmp:
-        while cutoff == -1 and counter < len(cutoffChars):
-            cutoff = tmp.rfind(cutoffChars[counter], 0, 5000)
-            counter += 1
-        else:
-            segments.append(tmp[:cutoff])
-            tmp = tmp[cutoff:]
-
-    synSegments = []
-    for segment in segments:
-        synSegments.append(texttospeech.types.SynthesisInput(text=segment))
-
-    # Perform the text-to-speech request on the text input with the selected
-    # voice parameters and audio file type
-    responses = []
-    for item in synSegments:
-        responses.append(client.synthesize_speech(
-            item, voice, audio_config))
+    audio_responses = split_article_and_convert(input)
 
     with open(DOWNLOADS_FOLDER + name + '.mp3', 'wb') as out:
-        for response in responses:
+        for response in audio_responses:
             out.write(response.audio_content)
         print('Audio content written to media/' + name)
 
@@ -85,12 +95,14 @@ def input(request):
         title = json.loads(request.body)['title']
         linkToParse = json.loads(request.body)['link']
         parsedArticle = parse_html(linkToParse)
+
         print("=" * 150)
         print(parsedArticle)
         print("=" * 150)
 
-        text2speech(title, parsedArticle)
+        text_to_speech(title, parsedArticle)
 
         return HttpResponse("Posty post")
+
     elif request.method == 'GET':
         return HttpResponse("Don't look!")
