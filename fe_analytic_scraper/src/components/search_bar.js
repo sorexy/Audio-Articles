@@ -14,7 +14,7 @@ class Searchbar extends Component {
     render() {
         return (
             // TODO: make the search bar clear after submitting
-
+            //       and make margins auto so it doesn't weirdly expand
             // Have to wrap in form because <input> does not support submit
             // event.preventDefault prevents the page from refreshing
             <form onSubmit={

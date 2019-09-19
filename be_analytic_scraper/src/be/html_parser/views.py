@@ -23,6 +23,9 @@ def parse_html(link: str) -> str:
     footers = soup.findAll('footer')
     for footer in footers:
         footer.decompose()
+    headers = soup.findAll('header')
+    for header in headers:
+        header.decompose()
 
     paragraphs = soup.findAll('p')
 

@@ -3,9 +3,11 @@ import logo from './logo.svg';
 import './App.css';
 
 import Searchbar from './components/search_bar';
+import FileUpload from './components/dropzone';
 
 import { connect } from 'react-redux';
 import { update } from './actions/search_bar';
+
 
 function mapStateToProps(state) {
     return {
@@ -48,6 +50,10 @@ class App extends Component {
 
     }
 
+    uploadHandler = () => {
+
+    }
+
     render() {
         return (
             <div className="App">
@@ -58,8 +64,13 @@ class App extends Component {
                 <div className="Searchbar">
                     <Searchbar changeHandler={this.changeHandler} submitHandler = {this.submitHandler}></Searchbar>
                 </div>
+                <div>
+                    <h5 style={{marginTop: 20}}>or</h5>
+                </div>
+                <div>
+                    <FileUpload></FileUpload>
+                </div>
             </div>
-
         );
     }
 }
