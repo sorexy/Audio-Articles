@@ -54,14 +54,17 @@ def text_to_speech(name: str, input: str) -> None:
 
         segments = []
 
-        # TODO: fix infinite loop here TODO
-        while len(tmp) > 5000 or tmp:
+        while len(tmp) > 5000:
             while cutoff == -1 and counter < len(cutoffChars):
                 cutoff = tmp.rfind(cutoffChars[counter], 0, 5000)
                 counter += 1
             else:
                 segments.append(tmp[:cutoff])
                 tmp = tmp[cutoff:]
+
+        if len(tmp) <= 5000:
+            segments.append(tmp)
+
         print("Number of segments: %s" % (len(segments)))
 
         synSegments = []
@@ -120,42 +123,42 @@ def input(request):
 @csrf_exempt
 def upload(request):
     if request.method == 'POST':
-        # # Bind the request to the form (You dont have to do this)
-        # # But it keeps it cleaner as you have a form structure, and
-        # # it enforces the schema (i.e. when you POST the form from fe, it needs
-        # # a 'title' field and a 'file' field, as described in forms.py)
-        # form = FileForm(request.POST, request.FILES)
-        # name = form['title'].value()
-        #
-        # # Can just use the bare POST and FILES attributes, check docs
-        # # request.POST contains the form data that aren't files (title)
-        # # request.FILES contains the files uploaded
-        # # It only displays the title, when printed but this is the actual file
-        # print(form['file'].value())
-        #
-        # # TODO: handle file name clashes
-        # with open('./html_parser/media/files/' + name, 'wb+') as file:
-        #     for chunk in form['file'].value().chunks():
-        #         file.write(chunk)
-        #
-        # # read to string
-        # rawText = textract.process(
-        #     './html_parser/media/files/' + name)
-        #
-        # # Only send printables to google t2s
-        # encodedText = rawText.decode('utf-8')
-        # printables = set(string.printable)
-        # printable = filter(lambda x: x in set(
-        #     string.printable) and x != '\n', encodedText)
-        # text = "".join(printable)
-        #
-        # print(text)
+        # Bind the request to the form (You dont have to do this)
+        # But it keeps it cleaner as you have a form structure, and
+        # it enforces the schema (i.e. when you POST the form from fe, it needs
+        # a 'title' field and a 'file' field, as described in forms.py)
+        form = FileForm(request.POST, request.FILES)
+        name = form['title'].value()
 
-        # TODO: fix google api error sending text TODOgi
-        try:
-            text_to_speech('name', "text")
-        except:
-            return HttpResponseServerError()
+        # Can just use the bare POST and FILES attributes, check docs
+        # request.POST contains the form data that aren't files (title)
+        # request.FILES contains the files uploaded
+        # It only displays the title, when printed but this is the actual file
+        print(form['file'].value())
+
+        # TODO: handle file name clashes
+        with open('./html_parser/media/files/' + name, 'wb+') as file:
+            for chunk in form['file'].value().chunks():
+                file.write(chunk)
+
+        # read to string
+        rawText = textract.process(
+            './html_parser/media/files/' + name)
+
+        # Only send printables to google t2s
+        encodedText = rawText.decode('utf-8')
+        printables = set(string.printable)
+        printable = filter(lambda x: x in set(
+            string.printable) and x != '\n', encodedText)
+        text = "".join(printable)
+
+        print(text)
+
+        # TODO: fix google api error sending text TODO
+        # try:
+        text_to_speech(name, text)
+        # except:
+        #     return HttpResponseServerError()
 
         return HttpResponse("Success")
     elif request.method == 'GET':
