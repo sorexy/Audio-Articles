@@ -50,8 +50,37 @@ class App extends Component {
 
     }
 
-    uploadHandler = () => {
+    uploadHandler = (file) => {
+        // we are sending the file via multipart form data so we can
+        // include the metadata like title
+        // omit content type for sending files, will automatically add
+        // multipart form data header
+        console.log(file[0])
 
+        // acts as a new form
+        var data = new FormData()
+        data.append('title', file[0].name)
+        data.append('file', file[0])
+        for (var pair of data.entries()) {
+            console.log(pair[0]+ ', ' + pair[1]);
+        }
+
+        fetch('http://localhost:8000/upload/', {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+            },
+            body: data,
+        })
+          .then((response) => {
+              if (response.ok) {
+                  console.log("File Uploaded");
+              } else {
+                  console.log("Failure");
+              }
+          })
     }
 
     render() {
@@ -68,7 +97,7 @@ class App extends Component {
                     <h5 style={{marginTop: 20}}>or</h5>
                 </div>
                 <div>
-                    <FileUpload></FileUpload>
+                    <FileUpload uploadHandler={this.uploadHandler}></FileUpload>
                 </div>
             </div>
         );
