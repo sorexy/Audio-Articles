@@ -57,7 +57,7 @@ class App extends Component {
         // multipart form data header
         console.log(file[0])
 
-        // acts as a new form
+        // Makes the data act as a form when you send (key value pairs)
         var data = new FormData()
         data.append('title', file[0].name)
         data.append('file', file[0])
@@ -78,6 +78,8 @@ class App extends Component {
               if (response.ok) {
                   console.log("File Uploaded");
               } else {
+                  // TODO: display a message upon failure, set something to True
+                  // and && it with a component that says error
                   console.log("Failure");
               }
           })

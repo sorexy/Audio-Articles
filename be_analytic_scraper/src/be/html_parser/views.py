@@ -1,11 +1,14 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
 from django.views.decorators.csrf import csrf_exempt
+from .forms import FileForm
 
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup as bs4
+import textract
 import html2text
 import json
+import string
 
 from google.cloud import texttospeech
 
@@ -50,6 +53,8 @@ def text_to_speech(name: str, input: str) -> None:
         counter = 0
 
         segments = []
+
+        # TODO: fix infinite loop here TODO
         while len(tmp) > 5000 or tmp:
             while cutoff == -1 and counter < len(cutoffChars):
                 cutoff = tmp.rfind(cutoffChars[counter], 0, 5000)
@@ -72,7 +77,7 @@ def text_to_speech(name: str, input: str) -> None:
         return responses
 
     # Setup the client, voice, and format to be returned
-    DOWNLOADS_FOLDER = "/Users/sorex/Projects/youtubeAnalyticScraper/be_analytic_scraper/src/be/html_parser/media/"
+    DOWNLOADS_FOLDER = "/Users/sorex/Projects/youtubeAnalyticScraper/be_analytic_scraper/src/be/html_parser/media/mp3s/"
     client = texttospeech.TextToSpeechClient()
 
     voice = texttospeech.types.VoiceSelectionParams(
@@ -87,8 +92,7 @@ def text_to_speech(name: str, input: str) -> None:
     with open(DOWNLOADS_FOLDER + name + '.mp3', 'wb') as out:
         for response in audio_responses:
             out.write(response.audio_content)
-        print('Audio content written to media/' + name)
-
+        print('Audio content written to media/mp3s/' + name)
 
 # Main view
 @csrf_exempt
@@ -103,9 +107,56 @@ def input(request):
         print(parsedArticle)
         print("=" * 150)
 
-        text_to_speech(title, parsedArticle)
+        try:
+            text_to_speech(title, parsedArticle)
+        except:
+            return HttpResponseServerError()
 
-        return HttpResponse("Posty post")
-
+        return HttpResponse("Success")
     elif request.method == 'GET':
-        return HttpResponse("Don't look!")
+        return HttpResponseServerError()
+
+
+@csrf_exempt
+def upload(request):
+    if request.method == 'POST':
+        # # Bind the request to the form (You dont have to do this)
+        # # But it keeps it cleaner as you have a form structure, and
+        # # it enforces the schema (i.e. when you POST the form from fe, it needs
+        # # a 'title' field and a 'file' field, as described in forms.py)
+        # form = FileForm(request.POST, request.FILES)
+        # name = form['title'].value()
+        #
+        # # Can just use the bare POST and FILES attributes, check docs
+        # # request.POST contains the form data that aren't files (title)
+        # # request.FILES contains the files uploaded
+        # # It only displays the title, when printed but this is the actual file
+        # print(form['file'].value())
+        #
+        # # TODO: handle file name clashes
+        # with open('./html_parser/media/files/' + name, 'wb+') as file:
+        #     for chunk in form['file'].value().chunks():
+        #         file.write(chunk)
+        #
+        # # read to string
+        # rawText = textract.process(
+        #     './html_parser/media/files/' + name)
+        #
+        # # Only send printables to google t2s
+        # encodedText = rawText.decode('utf-8')
+        # printables = set(string.printable)
+        # printable = filter(lambda x: x in set(
+        #     string.printable) and x != '\n', encodedText)
+        # text = "".join(printable)
+        #
+        # print(text)
+
+        # TODO: fix google api error sending text TODOgi
+        try:
+            text_to_speech('name', "text")
+        except:
+            return HttpResponseServerError()
+
+        return HttpResponse("Success")
+    elif request.method == 'GET':
+        return HttpResponseServerError()

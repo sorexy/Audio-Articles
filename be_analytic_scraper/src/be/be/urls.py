@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from html_parser.views import input
+from html_parser.views import input, upload
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('input/', input)
+    path('input/', input),
+    path('upload/', upload)
 ]
