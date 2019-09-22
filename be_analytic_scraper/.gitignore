@@ -124,3 +124,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+src/be/html_parser/media/
